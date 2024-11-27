@@ -1,0 +1,62 @@
+# Java-related files
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven-specific files
+.mvn/
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Gradle-specific files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.gradle-cache/
+
+# Spring Boot properties
+application.properties
+application.yml
+application-*.properties
+application-*.yml
+
+# IntelliJ IDEA files
+*.iml
+.idea/
+out/
+
+# Eclipse files
+*.classpath
+*.project
+*.settings/
+
+# VS Code files
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*.orig
+
+# Packages
+*.tar.gz
+*.zip
+
+# Configurations for testing
+.env
+test-output/

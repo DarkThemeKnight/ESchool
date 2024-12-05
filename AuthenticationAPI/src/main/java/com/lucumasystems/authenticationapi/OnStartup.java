@@ -1,6 +1,5 @@
 package com.lucumasystems.authenticationapi;
 
-import com.lucumasystems.authenticationapi.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -27,7 +25,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity
 @Slf4j
-
 public class OnStartup {
     private final UserDetailsService userService;
     private final AuthenticationManager authenticationManager;
@@ -57,8 +54,8 @@ public class OnStartup {
                     .sessionManagement(managementConfigure -> managementConfigure.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
                             authorizationManagerRequestMatcherRegistry
-                                    .requestMatchers("/api/permissions/**")
-                                    .hasRole("SUPER_ADMIN")
+                                    .requestMatchers("/api/permissions/**","/api/roles/**")
+                                    .hasAnyAuthority("SUPER_ADMIN")
                                     .anyRequest()
                                     .permitAll()
                     )

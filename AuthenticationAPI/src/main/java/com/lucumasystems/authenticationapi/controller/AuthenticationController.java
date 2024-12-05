@@ -7,32 +7,30 @@ import com.lucumasystems.authenticationapi.dto.UserDTO;
 import com.lucumasystems.authenticationapi.entity.Permission;
 import com.lucumasystems.authenticationapi.entity.Role;
 import com.lucumasystems.authenticationapi.entity.User;
+import com.lucumasystems.authenticationapi.orm.Mapper;
 import com.lucumasystems.authenticationapi.orm.RoleRepository;
 import com.lucumasystems.authenticationapi.orm.UserRepository;
 import com.lucumasystems.authenticationapi.service.AuditLogService;
 import com.lucumasystems.authenticationapi.service.JwtService;
 import com.lucumasystems.authenticationapi.service.UserService;
-import jakarta.annotation.security.RolesAllowed;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
 @Slf4j
 @RestController
 @RequestMapping("/auth")
@@ -47,8 +45,7 @@ public class AuthenticationController {
     private final JwtService jwtService;
 
 
-
-    @PostMapping
+    @PostMapping("/login")
     public ResponseEntity<ResponseHolder> login(@RequestBody LoginDto loginDto) {
         try {
             log.info("Log in request {}", loginDto);
@@ -76,7 +73,76 @@ public class AuthenticationController {
         }
     }
 
+    @PostMapping("/self-register")
+    public ResponseEntity<ResponseHolder> selfRegister(@RequestBody UserDTO userDTO) {
+        User user = userService.addUser(userDTO,0);
+        return ResponseEntity.ok(ResponseHolder.builder().message("Self Registration Successful").response(Mapper.toUserOutDto(user)).build());
+    }
 
+    @PostMapping("/register")
+    public ResponseEntity<ResponseHolder> register(@RequestBody UserDTO userDTO, @RequestHeader("Authorization") String token) {
+        token = jwtService.extractTokenFromHeader(token);
+        int userId = jwtService.getUserId(token);
+        User user = userService.addUser(userDTO,userId);
+        return ResponseEntity.ok(ResponseHolder.builder().message("Registration Successful").response(Mapper.toUserOutDto(user)).build());
+    }
 
+    @PostMapping("/update")
+    public ResponseEntity<ResponseHolder> update(@RequestParam("username")String username,@RequestBody UserDTO userDTO, @RequestHeader("Authorization") String token) {
+        token = jwtService.getUsername(token);
+        int userId = jwtService.getUserId(token);
+        User user= userService.updateUser(userDTO,userId,username);
+        return ResponseEntity.ok(ResponseHolder.builder().message("Update Successful").response(Mapper.toUserOutDto(user)).build());
+    }
+
+    @PatchMapping("/deactivate/{userId}")
+    public ResponseEntity<ResponseHolder> deactivateUser(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
+        token = jwtService.extractTokenFromHeader(token);
+        long updatedBy = jwtService.getUserId(token);
+        userService.deactivateUser(userId, updatedBy);
+        return ResponseEntity.ok(ResponseHolder.builder().message("User deactivated successfully").build());
+    }
+
+    @PatchMapping("/activate/{userId}")
+    public ResponseEntity<ResponseHolder> activateUser(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
+        token = jwtService.extractTokenFromHeader(token);
+        long updatedBy = jwtService.getUserId(token);
+        userService.activateUser(userId, updatedBy);
+        return ResponseEntity.ok(ResponseHolder.builder().message("User activated successfully").build());
+    }
+    @Data
+    public static class AssignRoles{
+        private List<String> data;
+    }
+
+    @PostMapping("/assign-roles/{userId}")
+    public ResponseEntity<ResponseHolder> assignRolesToUser(@PathVariable Long userId, @RequestBody AssignRoles roleNames, @RequestHeader("Authorization") String token) {
+        token = jwtService.extractTokenFromHeader(token);
+        long updatedBy = jwtService.getUserId(token);
+        User user = userService.assignRolesToUser(userId, roleNames.getData(), updatedBy);
+        return ResponseEntity.ok(ResponseHolder.builder().message("Roles assigned successfully").response(Mapper.toUserOutDto(user)).build());
+    }
+
+    @PostMapping("/remove-roles/{userId}")
+    public ResponseEntity<ResponseHolder> removeRolesFromUser(@PathVariable Long userId, @RequestBody AssignRoles roleNames, @RequestHeader("Authorization") String token) {
+        token = jwtService.extractTokenFromHeader(token);
+        long updatedBy = jwtService.getUserId(token);
+        User user = userService.removeRolesFromUser(userId, roleNames.getData(), updatedBy);
+        return ResponseEntity.ok(ResponseHolder.builder().message("Roles removed successfully").response(Mapper.toUserOutDto(user)).build());
+    }
+    @Data
+    public static class ResetPassword {
+        private String username;
+        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,20}$", message = "Password must be between 8 and 20 characters, and include at least one letter and one number.")
+        private String password;
+    }
+
+    @PatchMapping("/reset-password")
+    public ResponseEntity<ResponseHolder> resetPassword(@RequestParam @Valid ResetPassword resetPassword, @RequestHeader("Authorization") String token) {
+        token = jwtService.extractTokenFromHeader(token);
+        long updatedBy = jwtService.getUserId(token);
+        User user = userService.resetPassword(resetPassword.getUsername(),resetPassword.getPassword(), updatedBy);
+        return ResponseEntity.ok(ResponseHolder.builder().message("Password reset successfully").response(Mapper.toUserOutDto(user)).build());
+    }
 
 }

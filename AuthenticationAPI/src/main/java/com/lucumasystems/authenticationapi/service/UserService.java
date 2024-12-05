@@ -9,6 +9,7 @@ import com.lucumasystems.authenticationapi.orm.PermissionRepository;
 import com.lucumasystems.authenticationapi.orm.RoleRepository;
 import com.lucumasystems.authenticationapi.orm.UserRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -39,6 +37,10 @@ public class UserService implements UserDetailsService {
 
     public User addUser(UserDTO userDTO, long createdBy) {
         User creator = null;
+        Optional<User> alreadyExistingUser = userRepository.findActiveUserByUsername(userDTO.getUsername());
+        if (alreadyExistingUser.isPresent()) {
+            throw new EntityExistsException("User already exists");
+        }
         if (createdBy > 0){
             creator = userRepository.findById(createdBy).orElseThrow(()->new EntityNotFoundException("Creator not found"));
         }
@@ -61,6 +63,8 @@ public class UserService implements UserDetailsService {
                 .username(userDTO.getUsername())
                 .password(passwordEncoder.encode(userDTO.getPassword()))
                 .build();
+
+
         if (createdBy > 0){
             toSave.setCreatedBy(creator);
         }
@@ -72,8 +76,8 @@ public class UserService implements UserDetailsService {
         return toSave;
     }
 
-    public User updateUser(Long userId, UserDTO userDTO, long updatedBy) {
-        User existingUser = userRepository.findById(userId)
+    public User updateUser(UserDTO userDTO, long updatedBy, String username) {
+        User existingUser = userRepository.findActiveUserByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         User updater = userRepository.findById(updatedBy)
@@ -145,8 +149,8 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
-    public User resetPassword(Long userId, String newPassword, long updatedBy) {
-        User user = userRepository.findById(userId)
+    public User resetPassword(String username, String newPassword, long updatedBy) {
+        User user = userRepository.findActiveUserByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         User updater = userRepository.findById(updatedBy)

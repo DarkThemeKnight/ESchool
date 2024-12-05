@@ -1,6 +1,7 @@
 package com.lucumasystems.authenticationapi;
 
 import com.lucumasystems.authenticationapi.entity.User;
+import com.lucumasystems.authenticationapi.orm.RefreshTokenRepository;
 import com.lucumasystems.authenticationapi.orm.UserRepository;
 import com.lucumasystems.authenticationapi.service.JwtService;
 import io.jsonwebtoken.MalformedJwtException;
@@ -83,7 +84,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     context.setAuthentication(authenticationToken);
                     SecurityContextHolder.setContext(context);
-
                     log.debug("Authentication set in security context for user: {}", username);
                 }
             }

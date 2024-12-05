@@ -1,6 +1,7 @@
 package com.lucumasystems.authenticationapi.service;
 
 import com.lucumasystems.authenticationapi.dto.RoleDto;
+import com.lucumasystems.authenticationapi.dto.UserOutDto;
 import com.lucumasystems.authenticationapi.entity.Permission;
 import com.lucumasystems.authenticationapi.entity.Role;
 import com.lucumasystems.authenticationapi.entity.User;
@@ -108,7 +109,7 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
-    public Page<User>  findUsersWithRoles(List<String> roleName, int offset, int limit) {
+    public  Page<UserOutDto>  findUsersWithRoles(List<String> roleName, int offset, int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
         return roleRepository.findUsersWithRoleNames(roleName, pageable);
     }
@@ -123,7 +124,7 @@ public class RoleService {
         return roleRepository.listRoles(pageable, roleIds, names);
     }
 
-    Page<Role> findRolesWithPermissions(List<Integer> permissionIds, List<String>permissionNames, int offset, int limit) {
+    public Page<Role> findRolesWithPermissions(List<Integer> permissionIds, List<String>permissionNames, int offset, int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
         if (permissionIds != null && !permissionIds.isEmpty()) {
             return roleRepository.findRolesWithPermissions(permissionIds, pageable);

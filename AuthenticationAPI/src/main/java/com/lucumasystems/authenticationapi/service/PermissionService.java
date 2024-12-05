@@ -1,5 +1,6 @@
 package com.lucumasystems.authenticationapi.service;
 
+import com.lucumasystems.authenticationapi.dto.PermissionOutDto;
 import com.lucumasystems.authenticationapi.dto.PermissionsDTO;
 import com.lucumasystems.authenticationapi.entity.Permission;
 import com.lucumasystems.authenticationapi.entity.User;
@@ -27,13 +28,13 @@ public class PermissionService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Permission addPermission(PermissionsDTO permissionsDTO, int createdBy) {
+    public PermissionOutDto addPermission(PermissionsDTO permissionsDTO, int createdBy) {
         Optional<User> optionalUser =  userRepository.findActiveUserById(createdBy);
         if(optionalUser.isEmpty()) {
             throw new EntityNotFoundException("User not found");
         }
 
-        Optional<Permission> optionalPermission = permissionRepository.findByNameAndActive(permissionsDTO.getPermission());
+        Optional<PermissionOutDto> optionalPermission = permissionRepository.findByNameAndActive(permissionsDTO.getPermission());
         if (optionalPermission.isPresent()) {
             throw new PermissionAlreadyExistsException("Permission already exists");
         }
@@ -43,11 +44,21 @@ public class PermissionService {
                 .description(permissionsDTO.getDescription())
                 .createdBy(optionalUser.get())
                 .build();
-        return permissionRepository.save(permission);
+        permission=  permissionRepository.save(permission);
+        PermissionOutDto permissionOutDto = new PermissionOutDto();
+        permissionOutDto.setPermission(permission.getName());
+        permissionOutDto.setDescription(permission.getDescription());
+        return permissionOutDto;
+    }
+    private PermissionOutDto parse(Permission permission) {
+        PermissionOutDto permissionOutDto = new PermissionOutDto();
+        permissionOutDto.setPermission(permission.getName());
+        permissionOutDto.setDescription(permission.getDescription());
+        return permissionOutDto;
     }
 
     @Transactional
-    public Permission changePermissionStatus(int permissionId, int updatedBy) {
+    public PermissionOutDto changePermissionStatus(int permissionId, int updatedBy) {
         Optional<User> optionalUser =  userRepository.findActiveUserById(updatedBy);
         if(optionalUser.isEmpty()) {
             throw new EntityNotFoundException("User not found");
@@ -59,15 +70,13 @@ public class PermissionService {
         Permission permission = optionalPermission.get();
         permission.setActive(!permission.isActive());
         permission.setUpdatedBy(optionalUser.get());
-        return permissionRepository.save(permission);
+        return parse(permissionRepository.save(permission));
     }
-
     public Page<Permission> findPermissionsFromPermissionsIdOrPermissionsNames(int offset, int limit, List<Integer> permissionIds, List<String> permissionsNames) {
         Pageable pageable = PageRequest.of(offset, limit);
         return permissionRepository.findPermissionsFromPermissionsIdOrPermissionsNames(pageable, permissionIds, permissionsNames);
     }
-
-    public Permission updatePermission(int permissionId, PermissionsDTO permissionsDTO, int updatedBy) {
+    public PermissionOutDto updatePermission(int permissionId, PermissionsDTO permissionsDTO, int updatedBy) {
         Optional<User> optionalUser =  userRepository.findActiveUserById(updatedBy);
         if(optionalUser.isEmpty()) {
             throw new EntityNotFoundException("User not found");
@@ -82,9 +91,20 @@ public class PermissionService {
                 permission.setDescription(permissionsDTO.getDescription());
             }
             permission.setUpdatedBy(optionalUser.get());
-            return permissionRepository.save(permission);
+            Permission permission1 = permissionRepository.save(permission);
+            PermissionOutDto permissionOutDto = new PermissionOutDto();
+            permissionOutDto.setPermission(permission1.getName());
+            permissionOutDto.setDescription(permission1.getDescription());
+            return permissionOutDto;
         }
         throw new PermissionNotFoundException("Permission does not exist");
     }
-
+    public Page<PermissionOutDto> getPagedPermissions(int offset, int limit) {
+        Pageable pageable = PageRequest.of(offset, limit);
+        return permissionRepository.findAllPaged(pageable);
+    }
+    public Page<PermissionOutDto> getRolePermissions(String role, int offset, int limit) {
+        Pageable pageable = PageRequest.of(offset, limit);
+        return permissionRepository.findAllPagedRoleFilter(pageable, role);
+    }
 }

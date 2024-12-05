@@ -47,17 +47,19 @@ public class OnStartup {
 
     @Bean
     public DefaultSecurityFilterChain securityFilterChain(HttpSecurity security) {
-        DefaultSecurityFilterChain filterChain = null;
+        DefaultSecurityFilterChain filterChain;
         try {
             filterChain = security.csrf(AbstractHttpConfigurer::disable)
                     .csrf(AbstractHttpConfigurer::disable)
                     .sessionManagement(managementConfigure -> managementConfigure.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
                             authorizationManagerRequestMatcherRegistry
-                                    .requestMatchers("/api/permissions/**","/api/roles/**")
+                                    .requestMatchers("/api/permissions/**","/api/roles/**","/api/admin")
                                     .hasAnyAuthority("SUPER_ADMIN")
-                                    .anyRequest()
+                                    .requestMatchers("/api/auth/**")
                                     .permitAll()
+                                    .anyRequest()
+                                    .authenticated()
                     )
                     .authenticationManager(authenticationManager)
                     .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

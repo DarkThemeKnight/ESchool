@@ -29,7 +29,7 @@ public class RoleService {
     private final PermissionRepository permissionRepository;
 
     @Transactional
-    public Role addRole(RoleDto role, int createdBy) {
+    public void addRole(RoleDto role, int createdBy) {
         Optional<User> optionalUser =  userRepository.findActiveUserById(createdBy);
         if(optionalUser.isEmpty()) {
             throw new EntityNotFoundException("User not found");
@@ -57,11 +57,11 @@ public class RoleService {
                 .name(role.getRole())
                 .build();
 
-        return roleRepository.save(toSave);
+        roleRepository.save(toSave);
     }
 
     @Transactional
-    public Role addPermissionToRole(String roleName, int updatedBy, List<String> permissionName) {
+    public void addPermissionToRole(String roleName, int updatedBy, List<String> permissionName) {
         Optional<User> optionalUser =  userRepository.findActiveUserById(updatedBy);
 
         if(optionalUser.isEmpty()) {
@@ -92,9 +92,9 @@ public class RoleService {
         r.setPermissions(permissions);
         r.setUpdatedBy(optionalUser.get());
 
-        return roleRepository.save(r);
+        roleRepository.save(r);
     }
-    public Role changeRoleStatus(String name, int updatedBy) {
+    public void changeRoleStatus(String name, int updatedBy) {
         Optional<User> optionalUser =  userRepository.findActiveUserById(updatedBy);
         if(optionalUser.isEmpty()) {
             throw new EntityNotFoundException("User not found");
@@ -106,7 +106,7 @@ public class RoleService {
         Role role = optionalRole.get();
         role.setActive(!role.isActive());
         role.setUpdatedBy(optionalUser.get());
-        return roleRepository.save(role);
+        roleRepository.save(role);
     }
 
     public  Page<UserOutDto>  findUsersWithRoles(List<String> roleName, int offset, int limit) {

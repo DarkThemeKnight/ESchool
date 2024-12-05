@@ -4,6 +4,7 @@ import com.lucumasystems.authenticationapi.dto.UserDetailsDto;
 import com.lucumasystems.authenticationapi.dto.UserOutDto;
 import com.lucumasystems.authenticationapi.entity.Role;
 import com.lucumasystems.authenticationapi.entity.User;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.stream.Collectors;
 
@@ -23,7 +24,6 @@ public class Mapper {
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
-
 
 
 }

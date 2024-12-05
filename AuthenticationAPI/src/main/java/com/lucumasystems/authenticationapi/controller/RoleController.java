@@ -43,13 +43,7 @@ public class RoleController {
                             .message("Role added successfully.")
                             .build()
             );
-        } catch (EntityExistsException e) {
-            return ResponseEntity.badRequest().body(
-                    ResponseHolder.builder()
-                            .message(e.getMessage())
-                            .build()
-            );
-        } catch (EntityNotFoundException e) {
+        } catch (EntityExistsException | EntityNotFoundException e) {
             return ResponseEntity.badRequest().body(
                     ResponseHolder.builder()
                             .message(e.getMessage())
@@ -80,7 +74,7 @@ public class RoleController {
         jwtToken = jwtService.extractTokenFromHeader(jwtToken);
         try {
             int updatedBy = jwtService.getUserId(jwtToken);
-            Role role = roleService.addPermissionToRole(roleName, updatedBy, permissionNames);
+            roleService.addPermissionToRole(roleName, updatedBy, permissionNames);
             auditLogService.logAction(jwtService.getUsername(jwtToken), "ADD_PERMISSIONS_TO_ROLE");
             return ResponseEntity.ok(
                     ResponseHolder.builder()
@@ -114,7 +108,7 @@ public class RoleController {
         jwtToken = jwtService.extractTokenFromHeader(jwtToken);
         try {
             int updatedBy = jwtService.getUserId(jwtToken);
-            Role role = roleService.changeRoleStatus(roleName, updatedBy);
+            roleService.changeRoleStatus(roleName, updatedBy);
             auditLogService.logAction(jwtService.getUsername(jwtToken), "CHANGE_ROLE_STATUS");
             return ResponseEntity.ok(
                     ResponseHolder.builder()
